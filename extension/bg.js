@@ -258,9 +258,21 @@ function stopTicking() {
 }
 
 // ── Session complete ──────────────────────────────────────────────────────────
+// The tick interval, the keepAlive alarm, and the sessionEnd alarm can all
+// independently notice the session is over at nearly the same instant. Storage
+// reads/writes are async, so without this guard two of them can both pass the
+// `timer.running` check before either write lands, double-logging one session.
+let completingSession = false;
+
 function completeSession() {
+  if (completingSession) return;
+  completingSession = true;
+
   loadTimer((timer) => {
-    if (!timer.running) return;
+    if (!timer.running) {
+      completingSession = false;
+      return;
+    }
 
     saveTimer({ running: false, startTime: null, elapsed: 0 }, () => {
       const key = todayKey();
@@ -288,6 +300,7 @@ function completeSession() {
           }
 
           safeSendMessage({ type: 'COMPLETE' });
+          completingSession = false;
         });
       }, 'sync');
       chrome.alarms.clear('sessionEnd');

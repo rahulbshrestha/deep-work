@@ -4,17 +4,13 @@
 <meta charset="UTF-8">
 <title>Focus Timer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="theme.css" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f2f2f0;--card:#fff;--border:#e0e0dc;
-  --text:#2d2d2d;--muted:#888880;--red:#c0392b;
-  --green:#27ae60;--orange:#e67e22;
-}
 body{width:300px;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);font-size:13px}
 
 /* ── Timer card ── */
-.card{background:var(--card);margin:10px;border-radius:12px;border:1px solid var(--border);padding:18px}
+.card{background:var(--card);margin:10px;border-radius:14px;border:1px solid var(--border);padding:18px}
 
 .top-row{display:flex;align-items:center;gap:14px}
 .tomato-wrap{position:relative;flex-shrink:0}
@@ -52,8 +48,8 @@ body{width:300px;background:var(--bg);font-family:'Inter',sans-serif;color:var(-
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* Progress bar */
-.prog{height:3px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden}
-.prog-fill{height:100%;background:var(--red);border-radius:2px;width:0%;transition:width .9s linear,background .3s}
+.prog{height:5px;background:var(--border);border-radius:3px;margin-top:12px;overflow:hidden}
+.prog-fill{height:100%;background:var(--red);border-radius:3px;width:0%;transition:width .9s linear,background .3s}
 .prog-fill.paused{background:var(--orange)}
 .prog-fill.complete{background:var(--green);width:100%!important}
 
@@ -64,22 +60,23 @@ body{width:300px;background:var(--bg);font-family:'Inter',sans-serif;color:var(-
 /* Reset button */
 .btn-reset{
   width:100%;margin-top:12px;padding:7px;
-  border:1px solid var(--border);border-radius:7px;
+  border:1px solid var(--border);border-radius:8px;
   background:transparent;color:var(--muted);
   font-family:inherit;font-size:12px;font-weight:500;
   cursor:pointer;transition:all .15s;
 }
-.btn-reset:hover{border-color:#bbb;color:var(--text)}
+.btn-reset:hover{border-color:var(--red);color:var(--red);transform:translateY(-1px)}
 
 /* ── Click hint ── */
 .hint{
-  margin:0 10px 2px;padding:9px 12px;
-  background:#fff8f0;border:1px solid #f0ddd0;border-radius:9px;
-  font-size:11px;color:#7a5530;display:flex;align-items:center;gap:7px;
+  margin:0 10px 2px;padding:9px 12px 9px 10px;
+  background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:8px;
+  font-size:11px;color:var(--text);display:flex;align-items:center;gap:7px;
+  transition:border-color .3s;
 }
-.hint.running{background:#fff0f0;border-color:#f0d0d0;color:#7a2a22}
-.hint.paused{background:#fff8f0;border-color:#f0e0c8;color:#7a5020}
-.hint.complete{background:#f0faf3;border-color:#c8e8d0;color:#1a6b30}
+.hint.running{border-left-color:var(--red)}
+.hint.paused{border-left-color:var(--orange)}
+.hint.complete{border-left-color:var(--green)}
 .hint-icon{font-size:14px;flex-shrink:0}
 
 /* ── Footer ── */
@@ -95,7 +92,7 @@ body{width:300px;background:var(--bg);font-family:'Inter',sans-serif;color:var(-
 }
 .footer-btn:hover{background:var(--bg);color:var(--text)}
 .footer-btn+.footer-btn{border-left:1px solid var(--border)}
-.footer-wrap{margin:0 10px 10px;background:var(--card);border:1px solid var(--border);border-radius:0 0 10px 10px;border-top:none;overflow:hidden}
+.footer-wrap{margin:0 10px 10px;background:var(--card);border:1px solid var(--border);border-radius:0 0 14px 14px;border-top:none;overflow:hidden}
 </style>
 </head>
 <body>

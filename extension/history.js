@@ -324,6 +324,9 @@ function renderGraph() {
 
     row.appendChild(col);
   });
+
+  var body = document.querySelector('.graph-body');
+  body.scrollLeft = body.scrollWidth;
 }
 
 function attachCell(cell, k, count, tipTxt) {

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Focus Timer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f2f0;--card:#fff;--border:#e0e0dc;
+  --text:#2d2d2d;--muted:#888880;--red:#c0392b;
+  --green:#27ae60;--orange:#e67e22;
+}
+body{width:300px;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);font-size:13px}
+
+/* ── Timer card ── */
+.card{background:var(--card);margin:10px;border-radius:12px;border:1px solid var(--border);padding:18px}
+
+.top-row{display:flex;align-items:center;gap:14px}
+.tomato-wrap{position:relative;flex-shrink:0}
+.tomato-svg{width:60px;height:60px}
+.tomato-badge{
+  position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);
+  background:var(--red);color:#fff;font-size:11px;font-weight:700;
+  padding:2px 7px;border-radius:10px;white-space:nowrap;
+  font-variant-numeric:tabular-nums;min-width:36px;text-align:center;
+  transition:background .3s;
+}
+.tomato-badge.paused{background:var(--orange)}
+.tomato-badge.complete{background:var(--green)}
+
+.timer-info{flex:1}
+.countdown{
+  font-size:38px;font-weight:700;letter-spacing:-1.5px;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--text);transition:color .3s;
+}
+.countdown.running{color:var(--red)}
+.countdown.paused{color:var(--orange)}
+.countdown.complete{color:var(--green)}
+
+.status-line{
+  font-size:11px;color:var(--muted);margin-top:5px;font-weight:500;
+  display:flex;align-items:center;gap:5px;
+}
+.status-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;
+  transition:background .3s;
+}
+.status-dot.running{background:var(--red);animation:pulse 1.4s infinite}
+.status-dot.paused{background:var(--orange)}
+.status-dot.complete{background:var(--green)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Progress bar */
+.prog{height:3px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden}
+.prog-fill{height:100%;background:var(--red);border-radius:2px;width:0%;transition:width .9s linear,background .3s}
+.prog-fill.paused{background:var(--orange)}
+.prog-fill.complete{background:var(--green);width:100%!important}
+
+/* Goal progress */
+.goal-progress{height:6px;border-radius:999px;background:#ecece8;overflow:hidden}
+.goal-progress-bar{height:100%;width:0%;background:var(--green);border-radius:inherit;transition:width .2s ease}
+
+/* Reset button */
+.btn-reset{
+  width:100%;margin-top:12px;padding:7px;
+  border:1px solid var(--border);border-radius:7px;
+  background:transparent;color:var(--muted);
+  font-family:inherit;font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.btn-reset:hover{border-color:#bbb;color:var(--text)}
+
+/* ── Click hint ── */
+.hint{
+  margin:0 10px 2px;padding:9px 12px;
+  background:#fff8f0;border:1px solid #f0ddd0;border-radius:9px;
+  font-size:11px;color:#7a5530;display:flex;align-items:center;gap:7px;
+}
+.hint.running{background:#fff0f0;border-color:#f0d0d0;color:#7a2a22}
+.hint.paused{background:#fff8f0;border-color:#f0e0c8;color:#7a5020}
+.hint.complete{background:#f0faf3;border-color:#c8e8d0;color:#1a6b30}
+.hint-icon{font-size:14px;flex-shrink:0}
+
+/* ── Footer ── */
+.footer{
+  display:flex;border-top:1px solid var(--border);margin:0 10px;
+  border-radius:0 0 4px 4px;overflow:hidden;
+}
+.footer-btn{
+  flex:1;padding:9px 6px;border:none;background:var(--card);
+  color:var(--muted);font-family:inherit;font-size:11px;font-weight:500;
+  cursor:pointer;transition:all .15s;text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.footer-btn:hover{background:var(--bg);color:var(--text)}
+.footer-btn+.footer-btn{border-left:1px solid var(--border)}
+.footer-wrap{margin:0 10px 10px;background:var(--card);border:1px solid var(--border);border-radius:0 0 10px 10px;border-top:none;overflow:hidden}
+</style>
+</head>
+<body>
+
+<div style="height:10px"></div>
+
+<div class="hint" id="hintBox">
+  <span class="hint-icon">🍅</span>
+  <span id="hintText">Click the toolbar icon to start</span>
+</div>
+
+<div class="card" style="margin-top:8px">
+  <div class="top-row">
+    <div class="tomato-wrap">
+      <img class="tomato-svg" id="tomatoImg" src="icons/48.png" alt="tomato">
+      <div class="tomato-badge" id="badge">—</div>
+    </div>
+    <div class="timer-info">
+      <div class="countdown" id="countdown">—:——</div>
+      <div class="status-line">
+        <div class="status-dot" id="dot"></div>
+        <span id="statusTxt">Loading…</span>
+      </div>
+    </div>
+  </div>
+  <div class="prog"><div class="prog-fill" id="progFill"></div></div>
+  <div class="goal-row" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase;">Daily Goal</span>
+    <span id="goalText" style="font-size:11px; font-weight:700; color:var(--text);">0 / 4</span>
+  </div>
+  <div class="goal-progress" style="margin-top:8px;">
+    <div class="goal-progress-bar" id="goalProgressBar"></div>
+  </div>
+  <button class="btn-reset" id="btnReset">↺ Reset timer</button>
+</div>
+
+<div class="footer-wrap">
+  <div class="footer">
+    <button class="footer-btn" id="btnHistory">📊 History</button>
+    <button class="footer-btn" id="btnSettings">⚙️ Settings</button>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

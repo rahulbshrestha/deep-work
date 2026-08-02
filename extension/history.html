@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pomodoro History</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f6f8fa;--card:#fff;--border:#d0d7de;
+  --text:#1f2328;--muted:#656d76;--red:#c0392b;--green:#2da44e;
+  --g0:#ebedf0;--g1:#9be9a8;--g2:#40c463;--g3:#30a14e;--g4:#216e39;
+}
+body{
+  background:linear-gradient(180deg, #f8fafc 0%, #f3f5f8 100%);color:var(--text);
+  font-family:'Inter',sans-serif;font-size:13px;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:32px 20px 56px;
+}
+.page-header{width:100%;max-width:980px;display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-img{width:34px;height:34px}
+.logo-text{font-size:20px;font-weight:700;letter-spacing:-0.02em}
+.logo-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.header-right{margin-left:auto}
+.btn-link{
+  padding:7px 12px;border-radius:999px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);font-family:inherit;
+  font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:5px;transition:all .15s;
+}
+.btn-link:hover{background:#f8fafc;transform:translateY(-1px)}
+
+/* summary cards */
+.stat-row{display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px;width:100%;max-width:980px;margin-bottom:16px}
+.stat-card{background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+.stat-val{font-size:24px;font-weight:700;line-height:1;color:var(--text)}
+.stat-val.red{color:var(--red)}
+.stat-lbl{font-size:10px;color:var(--muted);font-weight:600;margin-top:5px;text-transform:uppercase;letter-spacing:.5px}
+
+/* focus card */
+.focus-card{width:100%;max-width:980px;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:16px;padding:18px 20px 16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+.focus-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.focus-title{font-size:15px;font-weight:700;color:var(--text)}
+.focus-subtitle{font-size:11px;color:var(--muted);margin-top:3px}
+.focus-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.focus-pill{font-size:11px;font-weight:600;color:var(--text);background:#f8fafc;border:1px solid var(--border);border-radius:999px;padding:6px 10px;white-space:nowrap}
+
+/* contribution graph */
+.graph-wrap{display:flex;align-items:flex-start;margin-top:8px}
+.dow{display:flex;flex-direction:column;padding-top:24px;margin-right:8px;flex-shrink:0}
+.dow-lbl{height:16px;line-height:16px;margin-bottom:2px;font-size:10px;color:var(--muted);font-weight:500;text-align:right;white-space:nowrap}
+.graph-body{display:flex;flex-direction:column;overflow-x:auto}
+.month-strip{display:flex;height:20px;margin-bottom:4px;position:relative}
+.mo-lbl{position:absolute;top:0;font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;line-height:20px}
+.week-row{display:flex;gap:2px}
+.week-col{display:flex;flex-direction:column;gap:2px}
+.cell{width:16px;height:16px;border-radius:3px;background:var(--g0);flex-shrink:0;cursor:pointer;transition:all .15s}
+.cell:hover{transform:scale(1.08);z-index:10;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.cell.future{background:transparent;pointer-events:none}
+.cell.today{outline:2px solid #e36209;outline-offset:1px}
+.cell[data-v="1"]{background:var(--g1)}
+.cell[data-v="2"]{background:var(--g2)}
+.cell[data-v="3"]{background:var(--g3)}
+.cell[data-v="4"]{background:var(--g4)}
+.legend{display:flex;align-items:center;gap:4px;margin-top:10px;justify-content:flex-end}
+.leg-txt{font-size:10px;color:var(--muted)}
+.leg-cell{width:16px;height:16px;border-radius:3px}
+
+.weekly-track{display:flex;align-items:stretch;overflow-x:auto;padding-bottom:4px;margin-top:12px}
+.weekly-chart{display:grid;grid-template-columns:repeat(10, minmax(0, 1fr));gap:8px;align-items:end;min-height:132px;width:100%}
+.weekly-bar-group{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.weekly-bar-shell{width:100%;height:84px;border-radius:10px;background:linear-gradient(180deg, #f5f7fa, #eef2f6);border:1px solid var(--border);padding:4px;display:flex;align-items:flex-end}
+.weekly-bar{width:100%;border-radius:8px;background:linear-gradient(180deg, var(--g2), var(--g4));min-height:6px;transition:height .18s ease}
+.weekly-bar:hover{filter:brightness(1.04)}
+.weekly-bar.zero{background:var(--g0)}
+.weekly-bar-value{font-size:11px;font-weight:700;color:var(--text)}
+.weekly-bar-label{font-size:10px;color:var(--muted);text-align:center;white-space:nowrap;line-height:1.2}
+.weekly-empty{width:100%;padding:18px 12px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:11px;text-align:center;background:var(--bg)}
+
+/* tooltip */
+#tip{
+  position:fixed;pointer-events:none;z-index:999;
+  background:#24292e;color:#e6edf3;font-size:11px;font-weight:500;
+  padding:5px 10px;border-radius:6px;white-space:nowrap;
+  opacity:0;transition:opacity .1s;transform:translateX(-50%);
+}
+
+/* modal */
+.modal-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.2);backdrop-filter:blur(2px);
+  display:none;align-items:center;justify-content:center;z-index:1000;
+  opacity:0;transition:opacity .2s;
+}
+.modal-overlay.active{display:flex;opacity:1}
+.modal{
+  background:var(--card);border-radius:24px;padding:24px;
+  width:100%;max-width:320px;box-shadow:0 20px 40px rgba(0,0,0,0.1);
+  transform:scale(0.95) translateY(10px);transition:all .2s;
+  border:1px solid var(--border);
+}
+.modal-overlay.active .modal{transform:scale(1) translateY(0)}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+.modal-date{font-size:12px;font-weight:500;color:var(--muted)}
+.modal-close{
+  background:none;border:none;font-size:20px;color:var(--muted);
+  cursor:pointer;padding:4px;border-radius:50%;line-height:1;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:var(--g0);color:var(--text)}
+
+.counter-wrap{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:0 10px}
+.btn-count{
+  width:48px;height:48px;border-radius:16px;border:1px solid var(--border);
+  background:var(--bg);color:var(--muted);font-size:24px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:all .1s;
+}
+.btn-count:hover{background:var(--g0);color:var(--text)}
+.btn-count:active{transform:scale(0.95)}
+.count-display{display:flex;flex-direction:column;align-items:center;min-width:80px}
+.count-val{font-size:48px;font-weight:700;font-family:monospace;line-height:1;letter-spacing:-2px}
+.count-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px}
+
+.presets{display:flex;gap:8px;margin-bottom:24px}
+.btn-preset{
+  flex:1;padding:8px 0;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .1s;
+}
+.btn-preset:hover{background:var(--g0)}
+.btn-preset.active{background:var(--text);color:var(--card);border-color:var(--text)}
+
+.btn-save{
+  width:100%;padding:14px;border:none;border-radius:16px;
+  background:var(--green);color:#fff;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;box-shadow:0 4px 12px rgba(45,164,78,0.2);
+}
+.btn-save:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 16px rgba(45,164,78,0.3)}
+.btn-save:active{transform:translateY(1px);box-shadow:0 2px 8px rgba(45,164,78,0.2)}
+.tabs{display:flex;gap:10px;width:100%;max-width:980px;margin-bottom:20px}
+.tab-btn{
+  padding:8px 20px;border-radius:8px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);font-weight:600;cursor:pointer;
+  transition:all .15s;
+}
+.tab-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+
+.view-section{display:none}
+.view-section.active{display:block}
+
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:20px;width:100%;max-width:980px}
+.trend-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.trend-title{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}
+.trend-val{font-size:24px;font-weight:700;color:var(--text)}
+.trend-sub{font-size:12px;color:var(--muted);margin-top:5px}
+</style>
+</head>
+<body>
+
+<div id="tip"></div>
+
+<div class="page-header">
+  <div class="logo">
+    <img class="logo-img" src="icons/running_48.png" alt="">
+    <div>
+      <div class="logo-text">Deep Work Log</div>
+      <div class="logo-sub">Track your deep-work sessions</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="settings.html" class="btn-link">⚙ Settings</a>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="history">History</button>
+  <button class="tab-btn" data-tab="trends">Trends</button>
+</div>
+
+<div id="historyView" class="view-section active">
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-val red" id="sToday">0</div><div class="stat-lbl">Today</div></div>
+    <div class="stat-card"><div class="stat-val" id="sWeek">0</div><div class="stat-lbl">This Week</div></div>
+    <div class="stat-card"><div class="stat-val" id="sStreak">0</div><div class="stat-lbl">Streak</div></div>
+  </div>
+
+  <div class="focus-card">
+    <div class="focus-header">
+      <div>
+        <div class="focus-title">Weekly focus rhythm</div>
+        <div class="focus-subtitle">A compact look at your recent weeks</div>
+      </div>
+      <div class="focus-pills">
+        <div class="focus-pill" id="weeklySummaryPill">Best week: —</div>
+      </div>
+    </div>
+
+    <div class="graph-wrap">
+      <div class="dow">
+        <div class="dow-lbl">Sun</div>
+        <div class="dow-lbl"></div>
+        <div class="dow-lbl">Tue</div>
+        <div class="dow-lbl"></div>
+        <div class="dow-lbl">Thu</div>
+        <div class="dow-lbl"></div>
+        <div class="dow-lbl">Sat</div>
+      </div>
+      <div class="graph-body">
+        <div class="month-strip" id="monthStrip"></div>
+        <div class="week-row" id="weekRow"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="leg-txt">Less</span>
+      <div class="leg-cell" style="background:var(--g0)"></div>
+      <div class="leg-cell" style="background:var(--g1)"></div>
+      <div class="leg-cell" style="background:var(--g2)"></div>
+      <div class="leg-cell" style="background:var(--g3)"></div>
+      <div class="leg-cell" style="background:var(--g4)"></div>
+      <span class="leg-txt">More</span>
+    </div>
+
+    <div class="weekly-track" id="weeklyTrack"></div>
+  </div>
+
+  <div class="modal-overlay" id="editModal">
+    <div class="modal" id="modalContent">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Edit Sessions</div>
+          <div class="modal-date" id="mDateDisplay">Monday, Jan 1st</div>
+        </div>
+        <button class="modal-close" id="btnCloseModal">×</button>
+      </div>
+      
+      <div class="counter-wrap">
+        <button class="btn-count" id="btnMinus">−</button>
+        <div class="count-display">
+          <div class="count-val" id="mCountVal">0</div>
+          <div class="count-lbl">Sessions</div>
+        </div>
+        <button class="btn-count" id="btnPlus">+</button>
+      </div>
+
+      <div class="presets">
+        <button class="btn-preset" data-val="0">Clear</button>
+        <button class="btn-preset" data-val="1">1</button>
+        <button class="btn-preset" data-val="2">2</button>
+        <button class="btn-preset" data-val="4">4</button>
+        <button class="btn-preset" data-val="8">8</button>
+      </div>
+
+      <button class="btn-save" id="btnSaveModal">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div id="trendsView" class="view-section">
+  <div class="trend-grid">
+    <div class="trend-card">
+      <div class="trend-title">Most Productive Day</div>
+      <div class="trend-val" id="tBestDay">—</div>
+      <div class="trend-sub">Day of the week with highest average sessions</div>
+    </div>
+    <div class="trend-card">
+      <div class="trend-title">Daily Average</div>
+      <div class="trend-val" id="tAvgSessions">—</div>
+      <div class="trend-sub">Average sessions per day (last 30 days)</div>
+    </div>
+    <div class="trend-card">
+      <div class="trend-title">Total Focus Time</div>
+      <div class="trend-val" id="tTotalTime">—</div>
+      <div class="trend-sub">Total hours spent in focus sessions</div>
+    </div>
+    <div class="trend-card">
+      <div class="trend-title">Goal Consistency</div>
+      <div class="trend-val" id="tGoalRate">—</div>
+      <div class="trend-sub">Days you hit your daily goal (last 30 days)</div>
+    </div>
+  </div>
+</div>
+
+<script src="history.js"></script>
+</body>
+</html>

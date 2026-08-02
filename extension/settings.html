@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Focus Timer — Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f0ed;--card:#fff;--border:#deded9;
+  --text:#2d2d2d;--muted:#888880;--red:#c0392b;
+  --green:#27ae60;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',sans-serif;font-size:13px;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:40px 20px;
+}
+
+.page-header{
+  width:100%;max-width:520px;
+  display:flex;align-items:center;gap:12px;margin-bottom:28px;
+}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-icon{font-size:26px}
+.logo-text{font-size:20px;font-weight:700}
+.logo-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.header-actions{margin-left:auto}
+.btn-link{
+  padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);font-family:inherit;
+  font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:5px;transition:border-color .15s;
+}
+.btn-link:hover{border-color:var(--red);color:var(--red)}
+
+.card{
+  width:100%;max-width:520px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:24px;margin-bottom:16px;
+}
+.card-title{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--muted);margin-bottom:20px;
+}
+
+.setting-row{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border);
+}
+.setting-row:last-child{border-bottom:none;padding-bottom:0}
+.setting-row:first-of-type{padding-top:0}
+.setting-label{font-size:14px;font-weight:500}
+.setting-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+
+/* Duration stepper */
+.stepper{display:flex;align-items:center;gap:10px}
+.step-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:18px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-family:inherit;line-height:1;flex-shrink:0;
+}
+.step-btn:hover{border-color:var(--red);color:var(--red);background:#fff}
+.step-val{
+  font-size:22px;font-weight:700;min-width:52px;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.step-unit{font-size:12px;color:var(--muted);font-weight:500}
+
+/* Toggle switch */
+.toggle{
+  position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{
+  position:absolute;inset:0;border-radius:12px;
+  background:#d0d0cc;transition:background .2s;
+}
+.toggle input:checked ~ .toggle-track{background:var(--green)}
+.toggle-knob{
+  position:absolute;top:3px;left:3px;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);
+  transition:left .2s;
+}
+.toggle input:checked ~ .toggle-knob{left:23px}
+
+/* Save button */
+.btn-save{
+  width:100%;max-width:520px;
+  padding:13px;border:none;border-radius:10px;
+  background:var(--red);color:#fff;
+  font-family:inherit;font-size:14px;font-weight:600;
+  cursor:pointer;transition:filter .15s;
+  display:block;
+}
+.btn-save:hover{filter:brightness(1.1)}
+
+.save-feedback{
+  max-width:520px;width:100%;
+  text-align:center;font-size:12px;color:var(--green);
+  font-weight:500;margin-top:10px;min-height:18px;
+}
+
+/* Danger zone */
+.danger-btn{
+  width:100%;padding:10px;border:1.5px solid #e8c5c2;border-radius:8px;
+  background:transparent;color:#c0392b;font-family:inherit;
+  font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
+}
+.danger-btn:hover{background:#fdf2f1;border-color:var(--red)}
+
+.button-stack{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.small-btn{
+  padding:8px 12px;border-radius:8px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);font-family:inherit;
+  font-size:12px;font-weight:600;cursor:pointer;
+}
+.small-btn:hover{border-color:var(--red);color:var(--red)}
+.small-btn.secondary{background:var(--bg)}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo">
+    <span class="logo-icon">🍅</span>
+    <div>
+      <div class="logo-text">Settings</div>
+      <div class="logo-sub">Focus Timer configuration</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <a href="history.html" class="btn-link">📊 History</a>
+  </div>
+</div>
+
+<!-- Timer settings -->
+<div class="card">
+  <div class="card-title">Timer & Goals</div>
+
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Session duration</div>
+      <div class="setting-sub">How long each pomodoro session lasts</div>
+    </div>
+    <div class="stepper">
+      <button class="step-btn" id="durMinus">−</button>
+      <div>
+        <div class="step-val" id="durVal">60</div>
+        <div class="step-unit" style="text-align:center">min</div>
+      </div>
+      <button class="step-btn" id="durPlus">+</button>
+    </div>
+  </div>
+
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Daily Goal</div>
+      <div class="setting-sub">Target number of sessions per day</div>
+    </div>
+    <div class="stepper">
+      <button class="step-btn" id="goalMinus">−</button>
+      <div>
+        <div class="step-val" id="goalVal">4</div>
+        <div class="step-unit" style="text-align:center">sessions</div>
+      </div>
+      <button class="step-btn" id="goalPlus">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notifications -->
+<div class="card">
+  <div class="card-title">Notifications</div>
+
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Session complete notification</div>
+      <div class="setting-sub">Show a desktop notification when a pomodoro session ends</div>
+    </div>
+    <label class="toggle" id="notifToggle">
+      <input type="checkbox" id="notifCheck" checked>
+      <div class="toggle-track"></div>
+      <div class="toggle-knob"></div>
+    </label>
+  </div>
+</div>
+
+<!-- Backup & sync -->
+<div class="card">
+  <div class="card-title">Backup & Sync</div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Save to Google account</div>
+      <div class="setting-sub">Store your history and settings in Chrome sync for the same Google account/profile.</div>
+    </div>
+    <div class="button-stack">
+      <button class="small-btn" id="btnSaveToGoogle">Save</button>
+      <button class="small-btn secondary" id="btnLoadFromGoogle">Load</button>
+    </div>
+  </div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Backup file</div>
+      <div class="setting-sub">Download or import a JSON backup file for easy restore on another Mac or browser.</div>
+    </div>
+    <div class="button-stack">
+      <button class="small-btn secondary" id="btnExportBackup">Export</button>
+      <button class="small-btn secondary" id="btnImportBackup">Import</button>
+      <input type="file" id="fileInput" accept="application/json" hidden>
+    </div>
+  </div>
+</div>
+
+<!-- Danger zone -->
+<div class="card">
+  <div class="card-title">Data</div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-label">Clear history</div>
+      <div class="setting-sub">Permanently delete all recorded pomodoro sessions</div>
+    </div>
+    <button class="danger-btn" id="btnClear" style="width:auto;padding:7px 14px">Clear All</button>
+  </div>
+</div>
+
+<button class="btn-save" id="btnSave">Save Settings</button>
+<div class="save-feedback" id="feedback"></div>
+
+<script src="settings.js"></script>
+</body>
+</html>

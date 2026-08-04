@@ -287,12 +287,16 @@ function completeSession() {
 
           if (settings.notifications !== false) {
             try {
-              chrome.notifications.create('focusComplete', {
+              // A fresh ID per notification is required — reusing one ID makes
+              // Chrome silently update the existing notification in place
+              // instead of popping up a new one (and it won't play a sound).
+              chrome.notifications.create(`focusComplete-${Date.now()}`, {
                 type: 'basic',
                 iconUrl: 'icons/complete_128.png',
                 title: '🍅 Pomodoro complete!',
                 message: `Great work! Session logged for ${key}. Click to start a new one.`,
-                requireInteraction: false
+                requireInteraction: false,
+                silent: false
               });
             } catch (error) {
               console.warn('Notification failed:', error);
@@ -387,6 +391,13 @@ function handleToggleTimer() {
 
 // ── Icon click → toggle ───────────────────────────────────────────────────────
 chrome.action.onClicked.addListener(() => {
+  handleToggleTimer();
+});
+
+// ── Notification click → start a new session ────────────────────────────────
+chrome.notifications.onClicked.addListener((notifId) => {
+  if (!notifId.startsWith('focusComplete-')) return;
+  chrome.notifications.clear(notifId);
   handleToggleTimer();
 });
 

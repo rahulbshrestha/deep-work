@@ -159,6 +159,8 @@ body{
 .trend-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
 .trend-title{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}
 .trend-val{font-size:24px;font-weight:700;color:var(--text)}
+.trend-val-row{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.trend-val-qualifier{font-size:13px;font-weight:600;color:var(--muted)}
 .trend-sub{font-size:12px;color:var(--muted);margin-top:5px}
 </style>
 </head>
@@ -275,17 +277,20 @@ body{
     <div class="trend-card">
       <div class="trend-title">Daily Average</div>
       <div class="trend-val" id="tAvgSessions">—</div>
-      <div class="trend-sub">Average sessions per day (last 30 days)</div>
+      <div class="trend-sub">Average sessions on days you worked (last 30 days)</div>
     </div>
     <div class="trend-card">
-      <div class="trend-title">Total Focus Time</div>
-      <div class="trend-val" id="tTotalTime">—</div>
-      <div class="trend-sub">Total hours spent in focus sessions</div>
+      <div class="trend-title">Focused This Month</div>
+      <div class="trend-val-row">
+        <span class="trend-val" id="tTotalTime">—</span>
+        <span class="trend-val-qualifier" id="tTotalDays"></span>
+      </div>
+      <div class="trend-sub">Hours focused and weekdays worked this month</div>
     </div>
     <div class="trend-card">
       <div class="trend-title">Goal Consistency</div>
       <div class="trend-val" id="tGoalRate">—</div>
-      <div class="trend-sub">Days you hit your daily goal (last 30 days)</div>
+      <div class="trend-sub">Weeks you hit your 15-session goal (last 12 weeks)</div>
     </div>
   </div>
 </div>

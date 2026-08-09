@@ -297,6 +297,12 @@ function completeSession() {
                 message: `Great work! Session logged for ${key}. Click to start a new one.`,
                 requireInteraction: false,
                 silent: false
+              }, () => {
+                // create() is async — a permission/OS-level failure shows up
+                // here, not as a thrown error, so the try/catch alone can't see it.
+                if (chrome.runtime.lastError) {
+                  console.warn('Session-complete notification failed:', chrome.runtime.lastError.message);
+                }
               });
             } catch (error) {
               console.warn('Notification failed:', error);
@@ -444,6 +450,30 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
 
   if (msg.type === 'GET_SETTINGS') {
     loadSettings((settings) => reply({ settings }));
+    return true;
+  }
+
+  if (msg.type === 'TEST_NOTIFICATION') {
+    chrome.notifications.getPermissionLevel((level) => {
+      if (level === 'denied') {
+        reply({ ok: false, reason: 'denied' });
+        return;
+      }
+      chrome.notifications.create(`focusTest-${Date.now()}`, {
+        type: 'basic',
+        iconUrl: 'icons/complete_128.png',
+        title: '🍅 Test notification',
+        message: 'If you can see this, notifications are working.',
+        requireInteraction: false,
+        silent: false
+      }, () => {
+        if (chrome.runtime.lastError) {
+          reply({ ok: false, reason: chrome.runtime.lastError.message });
+        } else {
+          reply({ ok: true });
+        }
+      });
+    });
     return true;
   }
 

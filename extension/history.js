@@ -149,8 +149,15 @@ function renderStats() {
     week += hist[dateKey(d)] || 0;
   }
 
-  for (d = new Date(today); (hist[dateKey(d)] || 0) > 0; d.setDate(d.getDate() - 1)) {
-    streak++;
+  // Streak only counts weekdays — weekends neither break nor extend it.
+  for (d = new Date(today); ; d.setDate(d.getDate() - 1)) {
+    var dow = d.getDay();
+    if (dow === 0 || dow === 6) continue;
+    if ((hist[dateKey(d)] || 0) > 0) {
+      streak++;
+    } else {
+      break;
+    }
   }
 
   document.getElementById('sToday').textContent = hist[todayKey] || 0;
@@ -370,11 +377,25 @@ function render(settings) {
   renderTrends(settings);
 }
 
+var WEEKLY_GOAL = 15;
+
 function renderTrends(settings) {
-  const sessions = Object.values(hist);
-  const totalSessions = sessions.reduce(function(a, b) { return a + b; }, 0);
-  const totalHours = (totalSessions * (settings.duration || 60)) / 60;
-  document.getElementById('tTotalTime').textContent = totalHours.toFixed(1) + 'h';
+  const monthPrefix = todayKey.slice(0, 7);
+  let monthSessions = 0;
+  let monthActiveWeekdays = 0;
+  for (const dateStr in hist) {
+    if (dateStr.slice(0, 7) !== monthPrefix) continue;
+    const count = hist[dateStr];
+    monthSessions += count;
+    if (count > 0) {
+      const dow = new Date(dateStr + 'T12:00:00').getDay();
+      if (dow !== 0 && dow !== 6) monthActiveWeekdays++;
+    }
+  }
+  const monthHours = (monthSessions * (settings.duration || 60)) / 60;
+  document.getElementById('tTotalTime').textContent = monthHours.toFixed(1) + 'h';
+  document.getElementById('tTotalDays').textContent =
+    'in ' + monthActiveWeekdays + ' day' + (monthActiveWeekdays === 1 ? '' : 's');
 
   const dayTotals = [0, 0, 0, 0, 0, 0, 0];
   const dayCounts = [0, 0, 0, 0, 0, 0, 0];
@@ -396,17 +417,20 @@ function renderTrends(settings) {
   document.getElementById('tBestDay').textContent = bestDayIdx === -1 ? '—' : DAYS[bestDayIdx];
 
   let last30Total = 0;
-  let goalHits = 0;
+  let activeDays = 0;
   for (let i = 0; i < 30; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const k = dateKey(d);
     const count = hist[k] || 0;
     last30Total += count;
-    if (count >= (settings.dailyGoal || 4)) goalHits++;
+    if (count > 0) activeDays++;
   }
-  document.getElementById('tAvgSessions').textContent = (last30Total / 30).toFixed(1);
-  document.getElementById('tGoalRate').textContent = Math.round((goalHits / 30) * 100) + '%';
+  document.getElementById('tAvgSessions').textContent = activeDays > 0 ? (last30Total / activeDays).toFixed(1) : '0.0';
+
+  const recentGoalWeeks = buildWeeklySummary().slice(-12);
+  const weeksHit = recentGoalWeeks.filter(function(w) { return w.total >= WEEKLY_GOAL; }).length;
+  document.getElementById('tGoalRate').textContent = Math.round((weeksHit / recentGoalWeeks.length) * 100) + '%';
 }
 
 let selectedDateStr = null;

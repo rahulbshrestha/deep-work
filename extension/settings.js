@@ -166,6 +166,22 @@ document.getElementById('notifCheck').onchange = (e) => {
   pendingNotif = e.target.checked;
 };
 
+document.getElementById('btnTestNotif').onclick = () => {
+  const sub = document.getElementById('notifTestSub');
+  sub.textContent = 'Sending…';
+  safeSendMessage({ type: 'TEST_NOTIFICATION' }, (res) => {
+    if (res && res.ok) {
+      sub.textContent = 'Sent! If nothing popped up, notifications are blocked outside the extension.';
+    } else if (res && res.reason === 'denied') {
+      sub.textContent = 'Blocked — enable notifications for Chrome in your OS system settings.';
+    } else if (res && res.reason) {
+      sub.textContent = 'Could not send a test notification (' + res.reason + ').';
+    } else {
+      sub.textContent = "No response from the extension — reload it at chrome://extensions, then try again.";
+    }
+  });
+};
+
 document.getElementById('btnSave').onclick = () => {
   safeSendMessage({
     type: 'SAVE_SETTINGS',

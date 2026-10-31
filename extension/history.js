@@ -374,7 +374,125 @@ function render(settings) {
   renderStats();
   renderGraph();
   renderWeeklySummary();
+  renderWeeklyLog(settings);
   renderTrends(settings);
+}
+
+var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+function formatHours(h) {
+  return Number.isInteger(h) ? String(h) : h.toFixed(1);
+}
+
+// Weeks run Sun–Sat and are split at month boundaries so every row belongs
+// to exactly one month (e.g. Apr 26–30 and May 1–2 are separate rows).
+function buildWeeklyLog(hoursPerSession, goalPerWeekday) {
+  var keys = Object.keys(hist).filter(function(k) { return hist[k] > 0 && k <= todayKey; }).sort();
+  if (keys.length === 0) return [];
+
+  var parts = keys[0].split('-');
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var end = new Date(today);
+  end.setDate(end.getDate() + (6 - end.getDay()));
+
+  var rows = [];
+  var row = null;
+  for (; d <= end; d.setDate(d.getDate() + 1)) {
+    var dow = d.getDay();
+    if (!row || dow === 0 || d.getDate() === 1) {
+      row = { year: d.getFullYear(), month: d.getMonth(), days: [], weekdays: [], sessions: 0, current: false };
+      rows.push(row);
+    }
+    var day = new Date(d);
+    row.days.push(day);
+    if (dow !== 0 && dow !== 6) row.weekdays.push(day);
+    row.sessions += hist[dateKey(day)] || 0;
+    if (dateKey(day) === todayKey) row.current = true;
+  }
+
+  return rows
+    .filter(function(r) { return r.weekdays.length > 0 || r.sessions > 0; })
+    .map(function(r) {
+      r.first = r.days[0];
+      r.last = r.days[r.days.length - 1];
+      r.hours = r.sessions * hoursPerSession;
+      r.goal = Math.max(1, r.weekdays.length) * goalPerWeekday;
+      return r;
+    })
+    .reverse();
+}
+
+function renderWeeklyLog(settings) {
+  var body = document.getElementById('logBody');
+  if (!body) return;
+
+  var hoursPerSession = (settings.duration || 60) / 60;
+  var goalPerWeekday = (settings.dailyGoal || 4) * hoursPerSession;
+  var rows = buildWeeklyLog(hoursPerSession, goalPerWeekday);
+
+  document.getElementById('logSubtitle').textContent =
+    'Each bar fills toward your goal of ' + formatHours(goalPerWeekday * 5) + 'h per full week';
+
+  body.innerHTML = '';
+  if (rows.length === 0) {
+    document.getElementById('logTotalPill').textContent = 'Total: 0h';
+    var empty = document.createElement('div');
+    empty.className = 'weekly-empty';
+    empty.textContent = 'No sessions yet — your weekly log will appear here.';
+    body.appendChild(empty);
+    return;
+  }
+
+  var totalHours = rows.reduce(function(sum, r) { return sum + r.hours; }, 0);
+  document.getElementById('logTotalPill').textContent = 'Total: ' + formatHours(totalHours) + 'h';
+
+  var monthTotals = {};
+  rows.forEach(function(r) {
+    var mk = r.year + '-' + r.month;
+    monthTotals[mk] = (monthTotals[mk] || 0) + r.hours;
+  });
+
+  var table = document.createElement('table');
+  table.className = 'log-table';
+  table.innerHTML = '<thead><tr><th>Year</th><th>Week</th><th class="num">Hours</th><th>Progress</th></tr></thead>';
+  var tbody = document.createElement('tbody');
+
+  var lastMonth = null;
+  rows.forEach(function(r) {
+    var mk = r.year + '-' + r.month;
+    if (mk !== lastMonth) {
+      var mRow = document.createElement('tr');
+      mRow.className = 'month-row';
+      mRow.innerHTML = '<td colspan="4"><span class="month-name">' + MONTH_NAMES[r.month] + ' ' + r.year +
+        '</span><span class="month-total">' + formatHours(monthTotals[mk]) + 'h this month</span></td>';
+      tbody.appendChild(mRow);
+      lastMonth = mk;
+    }
+
+    var range = MONTH_NAMES[r.first.getMonth()] + ' ' + r.first.getDate();
+    if (r.last.getDate() !== r.first.getDate()) range += ' – ' + MONTH_NAMES[r.last.getMonth()] + ' ' + r.last.getDate();
+
+    var pct = Math.round((r.hours / r.goal) * 100);
+    var tier = pct >= 100 ? 'tier-max' : pct >= 60 ? 'tier-good' : pct >= 30 ? 'tier-mid' : 'tier-low';
+    var fill = Math.min(100, pct);
+
+    var tr = document.createElement('tr');
+    tr.className = 'week-row-log';
+    tr.innerHTML =
+      '<td class="log-year">' + r.year + '</td>' +
+      '<td class="log-range">' + range + (r.current ? '<span class="log-badge">Now</span>' : '') + '</td>' +
+      '<td class="log-hours num">' + formatHours(r.hours) + '<small>h</small></td>' +
+      '<td class="log-bar-cell"><div class="hp-wrap">' +
+        '<div class="hp-bar ' + tier + '" title="' + formatHours(r.hours) + 'h of ' + formatHours(r.goal) + 'h goal">' +
+          '<div class="hp-fill' + (fill >= 100 ? ' full' : '') + '" style="width:' + fill + '%"></div>' +
+        '</div>' +
+        '<span class="hp-pct">' + pct + '%</span>' +
+      '</div></td>';
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  body.appendChild(table);
 }
 
 var WEEKLY_GOAL = 15;
@@ -421,6 +539,7 @@ function renderTrends(settings) {
   for (let i = 0; i < 30; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
     const k = dateKey(d);
     const count = hist[k] || 0;
     last30Total += count;
